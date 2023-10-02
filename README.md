@@ -2,3 +2,5 @@
 
 
 ./compile_vtx.sh; ./example_vtx.exe
+
+### Launch resolution computation
