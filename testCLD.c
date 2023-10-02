@@ -129,7 +129,7 @@ void testCLD(Double_t Ang)
 	TGraph *ggrz0;				// z0 resolution graphs
 	TGraph *ggrth;				// theta resolution
 	// Setup graph arrays
-	Int_t Npt = 400;			// Nr. of points per graph
+	Int_t Npt = 200;			// Nr. of points per graph
 	Double_t * pt = new Double_t[Npt];
 	Double_t * pp = new Double_t[Npt];
 	Double_t *spt = new Double_t[Npt];
@@ -148,7 +148,7 @@ void testCLD(Double_t Ang)
 	Double_t *sth1 = new Double_t[Npt];
 	// Fill graph arrays
 	Double_t ptmin = 0.1;
-	Double_t ptmax = 10;
+	Double_t ptmax = 100;
 	Double_t pts = (ptmax - ptmin) / (Double_t)(Npt-1);
 	for (Int_t k = 0; k < Npt; k++)	// Loop on pt
 	{
