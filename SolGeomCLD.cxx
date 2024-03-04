@@ -86,7 +86,7 @@ void SolGeom::SolGeoInit()
 	//
 	// Magnetic field
 	//
-	fB = 2.0;
+	fB = 3.57;
 	//
 	// Create arrays
 	//

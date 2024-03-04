@@ -13,6 +13,9 @@
 #include "SolGeom.h"
 #include "SolTrack.h"
 #include "SolGridCov.h"
+#include <iostream>
+#include <sstream>
+
 //
 void CompRes(Double_t Ang)
 {
@@ -73,10 +76,10 @@ void CompRes(Double_t Ang)
 		1,					// Forw. VTX pixel layers
 		1,					// Forw. Si wrapper
 		1};					// Forw. pre-shower
-	G = new SolGeom("GeoIDEA_GT.txt");	// Geometry with selected detectors
+	G = new SolGeom("GeoCLD.txt");	// Geometry with selected detectors
 	G->Draw();				// Draw R-z geometry
-	//char* fname = "GeoIDEA_BASE.txt";
-	//G->GeoPrint(fname);
+	char* fname = "GeoCLD.txt";
+	G->GeoPrint(fname);
 	//
 	// Geometry initialized and drawn
 	//********************************************************
@@ -87,18 +90,18 @@ void CompRes(Double_t Ang)
 	//	
 	TCanvas *cc = G->cnv();					// Get canvas with geo display
 	Double_t x[3] = { 0.0, 0.0, 0.0 };		// Track starting point
-	Double_t ppt = 0.7;						// Track pt
+	Double_t ppt = 10;						// Track pt
 	Double_t ppz = ppt / TMath::Tan(th);	// Track pz
 	Double_t p[3] = { ppt, 0.0, ppz };		// Track momentum
 	SolTrack *trk = new SolTrack(x, p, G);	// Initialize track
 	TGraph *gr = trk->TrkPlot();			// graph intersection with layers
 	gr->Draw("PLSAME");						// plot track
-	//
-	// End track plot
+	
+	//End track plot
 	//*********************************************************
-	//
-	// *****************************
-	// Make plot of material       *
+	
+	//*****************************
+	//Make plot of material       *
 	//******************************
 	// 
 	THStack *hMat = new THStack("hMat", "IDEA: Material vs. cos(#theta)");
@@ -158,8 +161,20 @@ void CompRes(Double_t Ang)
 	TGraph *grd0;				// D resolution graphs
 	TGraph *grz0;				// z0 resolution graphs
 	TGraph *grth;				// theta resolution
+	// set graph name using Ang
+	// convert double to string
+    std::ostringstream oss;
+    oss << Ang;
+    std::string myString = oss.str();
+
+    std::cout << myString << std::endl;
+
+	TString gpt = "gpt-" + myString;
+	TString gd0 = "gd0-" + myString;
+	TString gz0 = "gz0-" + myString;
+	TString gth = "gth-" + myString;
 	// Setup graph arrays
-	Int_t Npt = 200;			// Nr. of points per graph
+	Int_t Npt = 2000;			// Nr. of points per graph
 	Double_t * pt = new Double_t[Npt];
 	Double_t * pp = new Double_t[Npt];
 	Double_t *spt = new Double_t[Npt];
@@ -167,13 +182,13 @@ void CompRes(Double_t Ang)
 	Double_t *sz0 = new Double_t[Npt];
 	Double_t *sth = new Double_t[Npt];
 	// Fill graph arrays
-	Double_t ptmin = 0.5;
+	Double_t ptmin = 1;
 	Double_t ptmax = 100;
 	Double_t pts = (ptmax - ptmin) / (Double_t)(Npt-1);
 	for (Int_t k = 0; k < Npt; k++)	// Loop on pt
 	{
 		Double_t x[3]; Double_t p[3];
-		x[0] = 0; x[1] = 0; x[2] = 0;			// Set origin
+		x[0] = 0.; x[1] = 0.; x[2] = 0.;			// Set origin
 		pt[k] = ptmin+k*pts;					// Set transverse momentum
 		p[0] = pt[k]; p[1] = 0;	p[2] = pt[k] / TMath::Tan(th);
 		pp[k] = pt[k]/TMath::Sin(th);			// Set momentum
@@ -182,154 +197,74 @@ void CompRes(Double_t Ang)
 		//cout << "Pt = " << pt[k] << ", #hits = " << nH << endl;
 		tr->CovCalc(Res,MS);					// Calculate covariance
 		spt[k] = tr->s_pt();							// Dpt/pt
-		sd0[k] = tr->s_D()*1e6;							// D  res. - change to microns
-		sz0[k] = tr->s_z0()*1e6;						// z0 res. - change to microns
+		sd0[k] = tr->s_D()*1e3;							// D  res. - change to microns
+		sz0[k] = tr->s_z0()*1e3;						// z0 res. - change to microns
 		sth[k] = tr->s_ct() / (1 + pow(tr->ct(), 2));	// theta resolution
 	}
 	//
 	// Compare pt resolution
 	resol->cd(1);
 	grpt = new TGraph(Npt, pt, spt);			// Estimated resolution
+	// set name
+	grpt->SetName(gpt);
 	grpt->SetLineColor(kRed);
 	grpt->SetTitle("#sigma_{pt}/pt");
 	grept->SetTitle("#sigma_{pt}/pt");
 	grept->SetMinimum(0.0);
 	grpt->SetMinimum(0.0);
 	grpt->GetXaxis()->SetTitle("pt (GeV)");
-	grept->Draw("AP");							// Simulated resolution
-	grpt->Draw("SAME");							// Estimated resolution
+	// grept->Draw("AP");							// Simulated resolution
+	grpt->Draw();							// Estimated resolution
 	// Compare d0 resolution
 	resol->cd(2);
 	grd0 = new TGraph(Npt, pp, sd0);			// Estimated resolution
+	grd0->SetName(gd0);
 	grd0->SetLineColor(kRed);
-	grd0->SetTitle("D_{0} (#mum)");
-	gred0->SetTitle("D_{0} (#mum)");
+	grd0->SetTitle("D_{0} (mm)");
+	gred0->SetTitle("D_{0} (mm)");
 	gred0->SetMinimum(0.0);
 	grd0->SetMinimum(0.0);
 	grd0->GetXaxis()->SetTitle("p (GeV)");
-	gred0->Draw("AP");							// Simulated resolution
-	grd0->Draw("SAME");							// Estimated resolution
+	// gred0->Draw("AP");							// Simulated resolution
+	grd0->Draw();							// Estimated resolution
 	// Compare z0 resolution
 	resol->cd(3);
 	grz0 = new TGraph(Npt, pp, sz0);			// Estimated resolution
+	grz0->SetName(gz0);
 	grz0->SetLineColor(kRed);
-	grz0->SetTitle("Z_{0} (#mum)");
-	grez0->SetTitle("Z_{0} (#mum)");
-	grez0->SetTitle("Z_{0} (#mum)");
+	grz0->SetTitle("Z_{0} (mm)");
+	grez0->SetTitle("Z_{0} (mm)");
+	grez0->SetTitle("Z_{0} (mm)");
 	grez0->SetMinimum(0.0);
 	grz0->GetXaxis()->SetTitle("p (GeV)");
-	grez0->Draw("AP");							// Simulated resolution
+	// grez0->Draw("AP");							// Simulated resolution
 	grz0->SetMarkerColor(kRed);
 	grz0->SetMarkerSize(0.5);
 	grz0->SetMarkerStyle(kFullCircle);
-	grz0->Draw("PLSAME");						// Estimated resolution
+	grz0->Draw();						// Estimated resolution
 	// Compare theta resolution
 	resol->cd(4);
 	grth = new TGraph(Npt, pp, sth);			// Estimated resolution
+	grth->SetName(gth);
 	grth->SetLineColor(kRed);
 	grth->SetTitle("#theta (rad)");
 	greth->SetTitle("#theta (rad)");
 	greth->SetMinimum(0.0);
 	grth->SetMinimum(0.0);
 	grth->GetXaxis()->SetTitle("p (GeV)");
-	greth->Draw("AP");							// Simulated resolution
+	// greth->Draw("AP");							// Simulated resolution
 	grth->SetMarkerColor(kRed);
 	grth->SetMarkerSize(0.5);
 	grth->SetMarkerStyle(kFullCircle);
-	grth->Draw("PLSAME");						// Estimated resolution
-	//
-	//***************************************************
-	// Repeat using interpolation                       *
-	//***************************************************
-	//
-	TCanvas *resol1 = new TCanvas("resol1", "Resolutions from grid", 10, 10, 500, 500);
-	resol1->Divide(2, 2);
-	// Define graphs
-	TGraph *ggrpt;				// pt resolution graphs
-	TGraph *ggrd0;				// D resolution graphs
-	TGraph *ggrz0;				// z0 resolution graphs
-	TGraph *ggrth;				// theta resolution
-	// Setup graph arrays
-	Npt = 200;			// Nr. of points per graph
-	Double_t * pt1 = new Double_t[Npt];
-	Double_t * pp1 = new Double_t[Npt];
-	Double_t *spt1 = new Double_t[Npt];
-	Double_t *sd01 = new Double_t[Npt];
-	Double_t *sz01 = new Double_t[Npt];
-	Double_t *sth1 = new Double_t[Npt];
-	// Fill graph arrays
-	//Double_t ptmin = 1.0;
-	//Double_t ptmax = 100;
-	//Double_t pts = (ptmax - ptmin) / (Double_t)(Npt - 1);
-	//
-	SolGridCov *GC = new SolGridCov();
-	GC->Read("CovIDEA_GT.root");
-	for (Int_t k = 0; k < Npt; k++)	// Loop on pt
-	{
-		Double_t x[3]; Double_t p[3];
-		x[0] = 0; x[1] = 0; x[2] = 0;			// Set origin
-		pt1[k] = ptmin + k*pts;					// Set transverse momentum
-		p[0] = pt1[k]; p[1] = 0; p[2] = pt1[k] / TMath::Tan(th);
-		pp1[k] = pt1[k] / TMath::Sin(th);			// Set momentum
-		//
-		TMatrixDSym Cv = GC->GetCov(pt1[k], Ang);
-		Double_t dptopt = 2 * TMath::Sqrt(Cv(2,2))*pt1[k] / (0.2998*G->B());
-		spt1[k] = dptopt;					// Dpt/pt
-		sd01[k] = TMath::Sqrt(Cv(0,0))*1e6;			// D  res. - change to microns
-		sz01[k] = TMath::Sqrt(Cv(3, 3))*1e6;			// z0 res. - change to microns
-		Double_t sint = TMath::Sin(th); Double_t sint2 = sint*sint;
-		sth1[k] = TMath::Sqrt(Cv(4, 4)) *sint2;	// theta resolution
-	}
-	//
-	// Compare pt resolution
-	resol1->cd(1);
-	ggrpt = new TGraph(Npt, pt1, spt1);			// Estimated resolution
-	ggrpt->SetLineColor(kRed);
-	ggrpt->SetTitle("#sigma_{pt}/pt");
-	grept->SetTitle("#sigma_{pt}/pt");
-	grept->SetMinimum(0.0);
-	ggrpt->SetMinimum(0.0);
-	ggrpt->GetXaxis()->SetTitle("pt (GeV)");
-	grept->Draw("AP");							// Simulated resolution
-	ggrpt->Draw("SAME");							// Estimated resolution
-	// Compare d0 resolution
-	resol1->cd(2);
-	ggrd0 = new TGraph(Npt, pp1, sd01);			// Estimated resolution
-	ggrd0->SetLineColor(kRed);
-	ggrd0->SetTitle("D_{0} (#mum)");
-	gred0->SetTitle("D_{0} (#mum)");
-	gred0->SetMinimum(0.0);
-	ggrd0->SetMinimum(0.0);
-	ggrd0->GetXaxis()->SetTitle("p (GeV)");
-	gred0->Draw("AP");							// Simulated resolution
-	ggrd0->Draw("SAME");							// Estimated resolution
-	// Compare z0 resolution
-	resol1->cd(3);
-	ggrz0 = new TGraph(Npt, pp1, sz01);			// Estimated resolution
-	ggrz0->SetLineColor(kRed);
-	ggrz0->SetTitle("Z_{0} (#mum)");
-	grez0->SetTitle("Z_{0} (#mum)");
-	grez0->SetTitle("Z_{0} (#mum)");
-	grez0->SetMinimum(0.0);
-	ggrz0->GetXaxis()->SetTitle("p (GeV)");
-	grez0->Draw("AP");							// Simulated resolution
-	ggrz0->SetMarkerColor(kRed);
-	ggrz0->SetMarkerSize(0.5);
-	ggrz0->SetMarkerStyle(kFullCircle);
-	ggrz0->Draw("LSAME");						// Estimated resolution
-	// Compare theta resolution
-	resol1->cd(4);
-	ggrth = new TGraph(Npt, pp1, sth1);			// Estimated resolution
-	ggrth->SetLineColor(kRed);
-	ggrth->SetTitle("#theta (rad)");
-	greth->SetTitle("#theta (rad)");
-	greth->SetMinimum(0.0);
-	ggrth->SetMinimum(0.0);
-	ggrth->GetXaxis()->SetTitle("p (GeV)");
-	greth->Draw("AP");							// Simulated resolution
-	ggrth->SetMarkerColor(kRed);
-	grth->SetMarkerSize(0.5);
-	ggrth->SetMarkerStyle(kFullCircle);
-	ggrth->Draw("LSAME");						// Estimated resolution
+	grth->Draw();						// Estimated resolution
+
+	// rwrite graphs to file (no recreate)
+	TFile *OutFile = new TFile("prova.root", "UPDATE");
+	grpt->Write(grpt->GetName(), TObject::kOverwrite);
+	grd0->Write(grd0->GetName(), TObject::kOverwrite);
+	grz0->Write(grz0->GetName(), TObject::kOverwrite);
+	grth->Write(grth->GetName(), TObject::kOverwrite);
+	OutFile->Close();
+	
 }
 

@@ -26,17 +26,18 @@ void testCLD(Double_t Ang)
 	Bool_t MS  = kTRUE;		// Enable multiple scattering
 	SolGeom *G;				// Initialize geometry
 	const Int_t nDet = 9;
-	Bool_t OK[nDet] = {		// Enable selected parts of the detector 
-		1,					// Beam pipe
-		1,					// Inner VTX pixel barrel
-		1,					// Inner tracker barrel
-		1,					// Outer tracker barrel
-		1,					// VTX disks
-		1,					// IT disks
-		1,					// OT disks
-		0,					// Undefined
-		0};					// undefined
-	G = new SolGeom(OK);	// Geometry with selected detectors
+	// Bool_t OK[nDet] = {		// Enable selected parts of the detector 
+	// 	1,					// Beam pipe
+	// 	1,					// Inner VTX pixel barrel
+	// 	1,					// Inner tracker barrel
+	// 	1,					// Outer tracker barrel
+	// 	1,					// VTX disks
+	// 	1,					// IT disks
+	// 	1,					// OT disks
+	// 	0,					// Undefined
+	// 	0};					// undefined
+	// G = new SolGeom(OK);	// Geometry with selected detectors
+	G  = new SolGeom("GeoCLD.txt");	
 	G->Draw();				// Draw R-z geometry
 	char* fname = "GeoCLD.txt";
 	//G->GeoPrint(fname);
@@ -50,11 +51,14 @@ void testCLD(Double_t Ang)
 	//	
 	TCanvas *cc = G->cnv();					// Get canvas with geo display
 	Double_t x[3] = { 0.0, 0.0, 0.0 };		// Track starting point
-	Double_t ppt = 0.7;						// Track pt
+	Double_t ppp = 0.8;
+        //Double_t ppt = ;						// Track pt
 	Double_t th = Ang * TMath::Pi() / 180.;
-	Double_t ppz = ppt / TMath::Tan(th);	// Track pz
+	Double_t ppt = ppp * TMath::Sin(th);
+        Double_t ppz = ppt / TMath::Tan(th);	// Track pz
 	Double_t p[3] = { ppt, 0.0, ppz };		// Track momentum
-	SolTrack *trk = new SolTrack(x, p, G);	// Initialize track
+	cout << "track p = " << TMath::Sqrt(ppt*ppt+ppz*ppz) << endl; 
+        SolTrack *trk = new SolTrack(x, p, G);	// Initialize track
 	TGraph *gr = trk->TrkPlot();			// graph intersection with layers
 	gr->Draw("PLSAME");						// plot track
 	//
@@ -129,7 +133,7 @@ void testCLD(Double_t Ang)
 	TGraph *ggrz0;				// z0 resolution graphs
 	TGraph *ggrth;				// theta resolution
 	// Setup graph arrays
-	Int_t Npt = 400;			// Nr. of points per graph
+	Int_t Npt = 50;			// Nr. of points per graph
 	Double_t * pt = new Double_t[Npt];
 	Double_t * pp = new Double_t[Npt];
 	Double_t *spt = new Double_t[Npt];
@@ -147,11 +151,15 @@ void testCLD(Double_t Ang)
 	Double_t *sz01 = new Double_t[Npt];
 	Double_t *sth1 = new Double_t[Npt];
 	// Fill graph arrays
-	Double_t ptmin = 0.1;
-	Double_t ptmax = 10;
+	Double_t ptmin = 1;
+	Double_t ptmax = 100;
 	Double_t pts = (ptmax - ptmin) / (Double_t)(Npt-1);
+	// check magnetic field
+	cout << "magnetic field = " << G->B() << endl;
 	for (Int_t k = 0; k < Npt; k++)	// Loop on pt
 	{
+		cout << "pt = " << ptmin + k*pts << endl;
+		cout << "k = " << k << endl;
 		Double_t x[3]; Double_t p[3];
 		x[0] = 0; x[1] = 0; x[2] = 0;			// Set origin
 		pt[k] = ptmin+k*pts;					// Set transverse momentum
@@ -159,20 +167,31 @@ void testCLD(Double_t Ang)
 		pp[k] = pt[k]/TMath::Sin(th);			// Set momentum
 		SolTrack *tr = new 	SolTrack(x, p, G);	// Initialize track
 		Int_t nH = tr->nHit();
-		//cout << "Pt = " << pt[k] << ", #hits = " << nH << endl;
-		tr->CovCalc(Res,MS);					// Calculate covariance
+		cout << "Pt = " << pt[k] << ", #hits = " << nH << endl;
+		cout << "P  = " << pp[k] << endl;
+                tr->CovCalc(Res,MS);					// Calculate covariance
 		spt[k] = tr->s_pt();							// Dpt/pt
+		cout << "spt = " << spt[k] << endl;
 		sd0[k] = tr->s_D()*1e6;							// D  res. - change to microns
+		cout << "sd0 = " << sd0[k] << endl;
 		sz0[k] = tr->s_z0()*1e6;						// z0 res. - change to microns
+		cout << "sz0 = " << sz0[k] << endl;
 		sth[k] = tr->s_ct() / (1 + pow(tr->ct(), 2));	// theta resolution
 		//
-		TMatrixDSym Cv = GC->GetCov(pt[k], Ang);
-		Double_t dptopt = 2 * TMath::Sqrt(Cv(2, 2))*pt[k] / (0.2998*G->B());
-		spt1[k] = dptopt;							// Dpt/pt
-		sd01[k] = TMath::Sqrt(Cv(0, 0))*1e6;			// D  res. - change to microns
-		sz01[k] = TMath::Sqrt(Cv(3, 3))*1e6;			// z0 res. - change to microns
-		Double_t sint = TMath::Sin(th); Double_t sint2 = sint * sint;
-		sth1[k] = TMath::Sqrt(Cv(4, 4)) *sint2;	// theta resolution
+		cout << "problem here" << endl;
+		// TMatrixDSym Cv = GC->GetCov(pt[k], Ang);
+		// Double_t dptopt = 2 * TMath::Sqrt(Cv(2, 2))*pt[k] / (0.2998*G->B());
+		// spt1[k] = dptopt;							// Dpt/pt
+		// sd01[k] = TMath::Sqrt(Cv(0, 0))*1e6;			// D  res. - change to microns
+		// sz01[k] = TMath::Sqrt(Cv(3, 3))*1e6;			// z0 res. - change to microns
+		// Double_t sint = TMath::Sin(th); Double_t sint2 = sint * sint;
+		// sth1[k] = TMath::Sqrt(Cv(4, 4)) *sint2;	// theta resolution
+		Double_t dptopt = 0;
+		spt1[k] = 0;							// Dpt/pt
+		sd01[k] = 0;			// D  res. - change to microns
+		sz01[k] = 0;			// z0 res. - change to microns
+		Double_t sint = 0; Double_t sint2 = 0;
+		sth1[k] = 0;	// theta resolution
 	}
 	//
 	// Plot pt resolution
@@ -336,4 +355,3 @@ void testCLD(Double_t Ang)
 	ggrth->Draw("LSAME");						// Estimated resolution
 	*/
 }
-
