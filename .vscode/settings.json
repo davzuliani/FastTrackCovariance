@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "plot_graphs.C": "cpp"
+        "plot_graphs.C": "cpp",
+        "new": "cpp"
     }
 }

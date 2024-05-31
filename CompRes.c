@@ -174,7 +174,7 @@ void CompRes(Double_t Ang)
 	TString gz0 = "gz0-" + myString;
 	TString gth = "gth-" + myString;
 	// Setup graph arrays
-	Int_t Npt = 2000;			// Nr. of points per graph
+	Int_t Npt = 5000;			// Nr. of points per graph
 	Double_t * pt = new Double_t[Npt];
 	Double_t * pp = new Double_t[Npt];
 	Double_t *spt = new Double_t[Npt];
@@ -183,7 +183,7 @@ void CompRes(Double_t Ang)
 	Double_t *sth = new Double_t[Npt];
 	// Fill graph arrays
 	Double_t ptmin = 1;
-	Double_t ptmax = 100;
+	Double_t ptmax = 5000;
 	Double_t pts = (ptmax - ptmin) / (Double_t)(Npt-1);
 	for (Int_t k = 0; k < Npt; k++)	// Loop on pt
 	{
@@ -259,7 +259,7 @@ void CompRes(Double_t Ang)
 	grth->Draw();						// Estimated resolution
 
 	// rwrite graphs to file (no recreate)
-	TFile *OutFile = new TFile("prova.root", "UPDATE");
+	TFile *OutFile = new TFile("prova_standardlayer_4T.root", "UPDATE");
 	grpt->Write(grpt->GetName(), TObject::kOverwrite);
 	grd0->Write(grd0->GetName(), TObject::kOverwrite);
 	grz0->Write(grz0->GetName(), TObject::kOverwrite);
