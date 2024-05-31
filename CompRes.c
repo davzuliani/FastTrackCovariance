@@ -259,7 +259,7 @@ void CompRes(Double_t Ang)
 	grth->Draw();						// Estimated resolution
 
 	// rwrite graphs to file (no recreate)
-	TFile *OutFile = new TFile("prova_standardlayer_4T.root", "UPDATE");
+	TFile *OutFile = new TFile("CLD_ok.root", "UPDATE");
 	grpt->Write(grpt->GetName(), TObject::kOverwrite);
 	grd0->Write(grd0->GetName(), TObject::kOverwrite);
 	grz0->Write(grz0->GetName(), TObject::kOverwrite);
